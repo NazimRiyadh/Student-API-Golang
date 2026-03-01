@@ -11,6 +11,7 @@ import (
 	"time"
 
 	config "github.com/NazimRiyadh/student_api_golang/internal/config"
+	"github.com/NazimRiyadh/student_api_golang/internal/http/handlers/student"
 )
 
 func main() {
@@ -20,9 +21,7 @@ func main() {
 	//setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello from backend!"))
-	})
+	router.HandleFunc("POST /", student.New())
 
 	//setup server
 	server := http.Server{
@@ -30,7 +29,7 @@ func main() {
 		Handler: router,
 	}
 
-	slog.Info("Server Started ", config.Address)
+	slog.Info("Server Started", slog.String("address", config.Address))
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
