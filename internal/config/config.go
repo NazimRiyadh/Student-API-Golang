@@ -22,15 +22,18 @@ func MustLoad() *Config {
 	ConfigPath = os.Getenv("CONFIG_PATH")
 
 	if ConfigPath == "" {
+		//flag.String() returns a value of string pointer
 		flags := flag.String("config", "", "path to the configuration file")
 		flag.Parse()
 
-		ConfigPath = *flags
+		ConfigPath = *flags //that why we use * to access the value in flag pointer
 		if ConfigPath == "" {
 			log.Fatal("Config file is not set")
 		}
 	}
 
+	//Use log.Fatal only when: The application cannot start or continue safely,
+	// and immediate termination is required, usually only in main()
 	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
 		log.Fatalf("Config file not exists: %s", err)
 	}

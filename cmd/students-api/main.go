@@ -29,9 +29,12 @@ func main() {
 	//setup router
 	router := http.NewServeMux()
 
+	//routes
 	router.HandleFunc("POST /api/students", student.New(storage))
 	router.HandleFunc("GET /api/students/{id}", student.GetById(storage))
 	router.HandleFunc("GET /api/students", student.GetList(storage))
+	router.HandleFunc("DELETE /api/students/{id}", student.DeleteById(storage))
+	router.HandleFunc("PUT /api/students/{id}", student.UpdateById(storage))
 
 	//setup server
 	server := http.Server{
@@ -41,6 +44,7 @@ func main() {
 
 	slog.Info("Server Started", slog.String("address", config.Address))
 
+	//Graceful Shutdown Implementation
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 

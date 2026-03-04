@@ -90,3 +90,74 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		response.WriteJSON(w, http.StatusOK, students)
 	}
 }
+
+func UpdateById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Updating student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			slog.Error("Convertion of id to int failed ", slog.String("id", id))
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		var Student types.Student
+
+		defer r.Body.Close()
+
+		err = json.NewDecoder(r.Body).Decode(&Student)
+		if errors.Is(err, io.EOF) {
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		if err != nil {
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		//request validation
+
+		if err := validator.New().Struct(Student); err != nil {
+			validateErr := err.(validator.ValidationErrors)
+			response.WriteJSON(w, http.StatusBadRequest, response.ValdationError(validateErr))
+			return
+		}
+
+		student, err := storage.UpdateStudent(intId, Student.Name, Student.Email, Student.Age)
+		if err != nil {
+			slog.Error("Error updating user", slog.String("id", id), slog.String("error", err.Error()))
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJSON(w, http.StatusOK, student)
+	}
+}
+
+func DeleteById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Deleting student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			slog.Error("Convertion of id to int failed ", slog.String("id", id))
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		err = storage.DeleteStudent(intId)
+		if err != nil {
+			slog.Error("Error deleting user", slog.String("id", id), slog.String("error", err.Error()))
+			response.WriteJSON(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJSON(w, http.StatusOK, map[string]string{
+			"message": "Student Deleted",
+		})
+	}
+}

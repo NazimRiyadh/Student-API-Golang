@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// This object represents a SQLite storage system, and it contains a database connection
 type Sqlite struct {
 	Db *sql.DB
 }
@@ -19,6 +20,7 @@ func New(cfg *config.Config) (*Sqlite, error) {
 		return nil, err
 	}
 
+	//db.Exec() is used when we want to execute a SQL statement that does not return rows.
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS STUDENTS (
 		ID INTEGER PRIMARY KEY AUTOINCREMENT,
 		NAME TEXT,
@@ -105,4 +107,34 @@ func (s *Sqlite) GetStudents() ([]types.Student, error) {
 	}
 
 	return students, nil
+}
+
+func (r *Sqlite) UpdateStudent(id int64, name string, email string, age int) (types.Student, error) {
+	stmt, err := r.Db.Prepare("UPDATE STUDENTS SET NAME=?, EMAIL=?, AGE=? WHERE ID=?")
+	if err != nil {
+		return types.Student{}, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(name, email, age, id)
+	if err != nil {
+		return types.Student{}, err
+	}
+
+	return types.Student{Id: id, Name: name, Email: email, Age: age}, nil
+}
+
+func (r *Sqlite) DeleteStudent(id int64) error {
+	stmt, err := r.Db.Prepare("DELETE FROM STUDENTS WHERE ID=?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
